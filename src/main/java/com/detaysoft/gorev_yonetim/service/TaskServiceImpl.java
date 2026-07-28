@@ -11,6 +11,10 @@ import com.detaysoft.gorev_yonetim.repository.TaskRepository;
 import com.detaysoft.gorev_yonetim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.detaysoft.gorev_yonetim.enums.TaskPriority;
+import com.detaysoft.gorev_yonetim.enums.TaskStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,6 +55,24 @@ public class TaskServiceImpl implements TaskService {
                 .stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<TaskResponseDto> getAllTasksPageable(Pageable pageable) {
+        return taskRepository.findAll(pageable)
+                .map(this::toResponseDto);
+    }
+
+    @Override
+    public Page<TaskResponseDto> getTasksByStatus(TaskStatus status, Pageable pageable) {
+        return taskRepository.findByStatus(status, pageable)
+                .map(this::toResponseDto);
+    }
+
+    @Override
+    public Page<TaskResponseDto> getTasksByPriority(TaskPriority priority, Pageable pageable) {
+        return taskRepository.findByPriority(priority, pageable)
+                .map(this::toResponseDto);
     }
 
     @Override
