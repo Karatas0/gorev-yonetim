@@ -15,10 +15,12 @@ import com.detaysoft.gorev_yonetim.enums.TaskPriority;
 import com.detaysoft.gorev_yonetim.enums.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
@@ -29,8 +31,12 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponseDto createTask(TaskRequestDto requestDto) {
+        log.info("Yeni görev oluşturuluyor: {}", requestDto.getTitle());
         Project project = projectRepository.findById(requestDto.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı: " + requestDto.getProjectId()));
+                .orElseThrow(() -> {
+                    log.error("Proje bulunamadı. ID: {}", requestDto.getProjectId());
+                    return new ResourceNotFoundException("Proje bulunamadı: " + requestDto.getProjectId());
+                });
 
         Task task = new Task();
         task.setTitle(requestDto.getTitle());
@@ -41,16 +47,21 @@ public class TaskServiceImpl implements TaskService {
 
         if (requestDto.getAssignedUserId() != null) {
             User user = userRepository.findById(requestDto.getAssignedUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getAssignedUserId()));
+                    .orElseThrow(() -> {
+                        log.error("Kullanıcı bulunamadı. ID: {}", requestDto.getAssignedUserId());
+                        return new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getAssignedUserId());
+                    });
             task.setAssignedUser(user);
         }
 
         Task savedTask = taskRepository.save(task);
+        log.info("Görev başarıyla oluşturuldu. ID: {}", savedTask.getId());
         return toResponseDto(savedTask);
     }
 
     @Override
     public List<TaskResponseDto> getAllTasks() {
+        log.info("Tüm görevler listeleniyor");
         return taskRepository.findAll()
                 .stream()
                 .map(this::toResponseDto)
@@ -77,18 +88,29 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponseDto getTaskById(Long id) {
+        log.info("Görev aranıyor. ID: {}", id);
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Görev bulunamadı: " + id));
+                .orElseThrow(() -> {
+                    log.error("Görev bulunamadı. ID: {}", id);
+                    return new ResourceNotFoundException("Görev bulunamadı: " + id);
+                });
         return toResponseDto(task);
     }
 
     @Override
     public TaskResponseDto updateTask(Long id, TaskRequestDto requestDto) {
+        log.info("Görev güncelleniyor. ID: {}", id);
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Görev bulunamadı: " + id));
+                .orElseThrow(() -> {
+                    log.error("Görev bulunamadı. ID: {}", id);
+                    return new ResourceNotFoundException("Görev bulunamadı: " + id);
+                });
 
         Project project = projectRepository.findById(requestDto.getProjectId())
-                .orElseThrow(() -> new ResourceNotFoundException("Proje bulunamadı: " + requestDto.getProjectId()));
+                .orElseThrow(() -> {
+                    log.error("Proje bulunamadı. ID: {}", requestDto.getProjectId());
+                    return new ResourceNotFoundException("Proje bulunamadı: " + requestDto.getProjectId());
+                });
 
         task.setTitle(requestDto.getTitle());
         task.setDescription(requestDto.getDescription());
@@ -98,19 +120,25 @@ public class TaskServiceImpl implements TaskService {
 
         if (requestDto.getAssignedUserId() != null) {
             User user = userRepository.findById(requestDto.getAssignedUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getAssignedUserId()));
+                    .orElseThrow(() -> {
+                        log.error("Kullanıcı bulunamadı. ID: {}", requestDto.getAssignedUserId());
+                        return new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getAssignedUserId());
+                    });
             task.setAssignedUser(user);
         } else {
             task.setAssignedUser(null);
         }
 
         Task updatedTask = taskRepository.save(task);
+        log.info("Görev başarıyla güncellendi. ID: {}", updatedTask.getId());
         return toResponseDto(updatedTask);
     }
 
     @Override
     public void deleteTask(Long id) {
+        log.info("Görev siliniyor. ID: {}", id);
         taskRepository.deleteById(id);
+        log.info("Görev başarıyla silindi. ID: {}", id);
     }
 
     private TaskResponseDto toResponseDto(Task task) {

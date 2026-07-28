@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.detaysoft.gorev_yonetim.exception.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -21,12 +23,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto createUser(UserRequestDto requestDto) {
+        log.info("Yeni kullanıcı oluşturuluyor: {}", requestDto.getEmail());
         User user = new User();
         user.setFirstName(requestDto.getFirstName());
         user.setLastName(requestDto.getLastName());
         user.setEmail(requestDto.getEmail());
         user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         User savedUser = userRepository.save(user);
+        log.info("Kullanıcı başarıyla oluşturuldu. ID: {}", savedUser.getId());
         return toResponseDto(savedUser);
     }
 
@@ -40,26 +44,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto getUserById(Long id) {
+        log.info("Kullanıcı aranıyor. ID: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + id));
+                .orElseThrow(() -> {
+                    log.error("Kullanıcı bulunamadı. ID: {}", id);
+                    return new ResourceNotFoundException("Kullanıcı bulunamadı: " + id);
+                });
         return toResponseDto(user);
     }
 
     @Override
     public UserResponseDto updateUser(Long id, UserRequestDto requestDto) {
+        log.info("Kullanıcı güncelleniyor. ID: {}", id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + id));
+                .orElseThrow(() -> {
+                    log.error("Kullanıcı bulunamadı. ID: {}", id);
+                    return new ResourceNotFoundException("Kullanıcı bulunamadı: " + id);
+                });
         user.setFirstName(requestDto.getFirstName());
         user.setLastName(requestDto.getLastName());
         user.setEmail(requestDto.getEmail());
-        user.setPassword(requestDto.getPassword());
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         User updatedUser = userRepository.save(user);
+        log.info("Kullanıcı başarıyla güncellendi. ID: {}", updatedUser.getId());
         return toResponseDto(updatedUser);
     }
 
     @Override
     public void deleteUser(Long id) {
+        log.info("Kullanıcı siliniyor. ID: {}", id);
         userRepository.deleteById(id);
+        log.info("Kullanıcı başarıyla silindi. ID: {}", id);
     }
 
     private UserResponseDto toResponseDto(User user) {

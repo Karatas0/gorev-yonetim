@@ -11,10 +11,12 @@ import com.detaysoft.gorev_yonetim.repository.TaskRepository;
 import com.detaysoft.gorev_yonetim.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
@@ -25,11 +27,18 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponseDto createComment(CommentRequestDto requestDto) {
+        log.info("Yeni yorum oluşturuluyor. Görev ID: {}", requestDto.getTaskId());
         Task task = taskRepository.findById(requestDto.getTaskId())
-                .orElseThrow(() -> new ResourceNotFoundException("Görev bulunamadı: " + requestDto.getTaskId()));
+                .orElseThrow(() -> {
+                    log.error("Görev bulunamadı. ID: {}", requestDto.getTaskId());
+                    return new ResourceNotFoundException("Görev bulunamadı: " + requestDto.getTaskId());
+                });
 
         User user = userRepository.findById(requestDto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getUserId()));
+                .orElseThrow(() -> {
+                    log.error("Kullanıcı bulunamadı. ID: {}", requestDto.getUserId());
+                    return new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getUserId());
+                });
 
         Comment comment = new Comment();
         comment.setContent(requestDto.getContent());
@@ -37,6 +46,7 @@ public class CommentServiceImpl implements CommentService {
         comment.setUser(user);
 
         Comment savedComment = commentRepository.save(comment);
+        log.info("Yorum başarıyla oluşturuldu. ID: {}", savedComment.getId());
         return toResponseDto(savedComment);
     }
 
@@ -53,7 +63,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public void deleteComment(Long id) {
+        log.info("Yorum siliniyor. ID: {}", id);
         commentRepository.deleteById(id);
+        log.info("Yorum başarıyla silindi. ID: {}", id);
     }
 
     private CommentResponseDto toResponseDto(Comment comment) {
