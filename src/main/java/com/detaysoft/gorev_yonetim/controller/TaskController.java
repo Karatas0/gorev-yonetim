@@ -77,4 +77,9 @@ public class TaskController {
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/my-tasks/{userId}")
+    public ResponseEntity<List<TaskResponseDto>> getTasksByAssignedUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(taskService.getTasksByAssignedUserId(userId));
+    }
 }

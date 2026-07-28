@@ -149,6 +149,15 @@ public class TaskServiceImpl implements TaskService {
         log.info("Görev başarıyla silindi. ID: {}", id);
     }
 
+    @Override
+    public List<TaskResponseDto> getTasksByAssignedUserId(Long userId) {
+        log.info("Kullanıcıya atanan görevler getiriliyor. Kullanıcı ID: {}", userId);
+        return taskRepository.findByAssignedUserId(userId)
+                .stream()
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
+    }
+
     private TaskResponseDto toResponseDto(Task task) {
         TaskResponseDto dto = new TaskResponseDto();
         dto.setId(task.getId());

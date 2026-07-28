@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 import com.detaysoft.gorev_yonetim.exception.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.extern.slf4j.Slf4j;
+import com.detaysoft.gorev_yonetim.repository.RoleRepository;
+import com.detaysoft.gorev_yonetim.enums.RoleName;
+import com.detaysoft.gorev_yonetim.entity.Role;
 
 @Slf4j
 @Service
@@ -20,15 +23,22 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
     @Override
     public UserResponseDto createUser(UserRequestDto requestDto) {
         log.info("Yeni kullanıcı oluşturuluyor: {}", requestDto.getEmail());
+
+        Role role = roleRepository.findByName(requestDto.getRole())
+                .orElseThrow(() -> new ResourceNotFoundException("Rol bulunamadı: " + requestDto.getRole()));
+
         User user = new User();
         user.setFirstName(requestDto.getFirstName());
         user.setLastName(requestDto.getLastName());
         user.setEmail(requestDto.getEmail());
         user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setRole(role);
+
         User savedUser = userRepository.save(user);
         log.info("Kullanıcı başarıyla oluşturuldu. ID: {}", savedUser.getId());
         return toResponseDto(savedUser);
@@ -83,6 +93,9 @@ public class UserServiceImpl implements UserService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setEmail(user.getEmail());
+        if (user.getRole() != null) {
+            dto.setRole(user.getRole().getName().name());
+        }
         return dto;
     }
 }
