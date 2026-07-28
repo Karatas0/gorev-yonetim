@@ -28,6 +28,7 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Override
     public TaskResponseDto createTask(TaskRequestDto requestDto) {
@@ -52,6 +53,13 @@ public class TaskServiceImpl implements TaskService {
                         return new ResourceNotFoundException("Kullanıcı bulunamadı: " + requestDto.getAssignedUserId());
                     });
             task.setAssignedUser(user);
+
+            // Email gönder
+            emailService.sendTaskAssignmentEmail(
+                    user.getEmail(),
+                    user.getFirstName() + " " + user.getLastName(),
+                    task.getTitle()
+            );
         }
 
         Task savedTask = taskRepository.save(task);
